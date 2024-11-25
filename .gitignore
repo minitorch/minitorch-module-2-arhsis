@@ -130,3 +130,5 @@ dmypy.json
 *.\#*
 data/
 pyodide
+tests/.DS_Store
+.DS_Store
