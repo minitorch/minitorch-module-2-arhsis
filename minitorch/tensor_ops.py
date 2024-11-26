@@ -216,8 +216,6 @@ class SimpleOps(TensorOps):
             out._tensor._storage[:] = start
 
             f(*out.tuple(), *a.tuple(), dim)
-            print(f"SimpleOps.reduce.ret:: {fn}, {start}, {out.shape}, {a.shape}, {dim}")
-            print(f"SimpleOps.reduce.ret:: {out._tensor._storage}")
 
             return out
 

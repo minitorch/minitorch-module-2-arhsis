@@ -68,10 +68,10 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     def build_topo(v):
         if v.unique_id in visited:
             return
-        visited.append(v.unique_id)
-        for parent in v.parents:
-            build_topo(parent)
         if not v.is_constant():
+            visited.append(v.unique_id)
+            for parent in v.parents:
+                build_topo(parent)
             topo.append(v)
 
     build_topo(variable)
