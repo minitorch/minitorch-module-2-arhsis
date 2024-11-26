@@ -216,6 +216,7 @@ class SimpleOps(TensorOps):
             out._tensor._storage[:] = start
 
             f(*out.tuple(), *a.tuple(), dim)
+
             return out
 
         return ret
@@ -259,7 +260,6 @@ def tensor_map(fn: Callable[[float], float]) -> Any:
     Returns:
         None : Fills in `out`
     """
-
     def _map(
         out: Storage,
         out_shape: Shape,
@@ -268,9 +268,19 @@ def tensor_map(fn: Callable[[float], float]) -> Any:
         in_shape: Shape,
         in_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
-
+        # mapping out_pos to in_pos
+        out_size = int(np.prod(out_shape))
+        out_idx = [0] * len(out_shape)
+        in_idx = [0] * len(in_shape)
+        # fill in the out storage one by one
+        for out_pos in range(out_size):
+            # mapping out_pos to out_idx
+            to_index(out_pos, out_shape, out_idx)
+            # out_shape is broadcasted from in_shape, mapping out_idx to in_idx
+            broadcast_index(out_idx, out_shape, in_shape, in_idx)
+            # get the in pos by in_idx
+            in_pos = index_to_position(in_idx, in_strides)
+            out[out_pos] = fn(in_storage[in_pos])
     return _map
 
 
@@ -318,9 +328,22 @@ def tensor_zip(fn: Callable[[float, float], float]) -> Any:
         b_shape: Shape,
         b_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
-
+        # mapping out_pos to a_pos and b_pos
+        out_size = int(np.prod(out_shape))
+        out_idx = [0] * len(out_shape)
+        a_idx = [0] * len(a_shape)
+        b_idx = [0] * len(b_shape)
+        # fill in the out storage one by one
+        for out_pos in range(out_size):
+            # mapping out_pos to out_idx
+            to_index(out_pos, out_shape, out_idx)
+            # out_shape is broadcasted from a_shape and b_shape, mapping out_idx to a_idx and b_idx
+            broadcast_index(out_idx, out_shape, a_shape, a_idx)
+            broadcast_index(out_idx, out_shape, b_shape, b_idx)
+            # get the a pos and b pos by a_idx and b_idx
+            a_pos = index_to_position(a_idx, a_strides)
+            b_pos = index_to_position(b_idx, b_strides)
+            out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
     return _zip
 
 
@@ -354,9 +377,25 @@ def tensor_reduce(fn: Callable[[float, float], float]) -> Any:
         a_strides: Strides,
         reduce_dim: int,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        def reduce_over_dimension(a_idx, out_pos):
+            """
+            Reduce over the dimension `reduce_dim` in `a`
+            """
+            for i in range(a_shape[reduce_dim]):
+                a_idx[reduce_dim] = i
+                a_pos = index_to_position(a_idx, a_strides)
+                out[out_pos] = fn(out[out_pos], a_storage[a_pos])
 
+        # mapping out_pos to a_pos
+        out_size = int(np.prod(out_shape))
+        out_idx = [0] * len(out_shape)
+        a_idx = [0] * len(a_shape)
+        for out_pos in range(out_size):
+            to_index(out_pos, out_shape, out_idx)
+            # mapping out_idx to a_idx
+            broadcast_index(out_idx, out_shape, a_shape, a_idx)
+            # reduce the reduce_dim
+            reduce_over_dimension(a_idx, out_pos)
     return _reduce
 
 
